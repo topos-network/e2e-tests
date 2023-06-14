@@ -1,19 +1,19 @@
 name: Frontend ERC20-Messaging
 
-inputs:
-  local-erc20-messaging-infra-version:
-    description: "Version of local-erc20-messaging-infra"
-    required: false
-    default: "main"
-  dapp-frontend-erc20-messaging-version:
-    description: "Version of dapp-frontend-erc20-messaging"
-    required: false
-    default: "main"
-
 on:
   pull_request:
     branches:
       - main
+  workflow_dispatch:
+    inputs:
+      local-erc20-messaging-infra-version:
+        description: "Version of local-erc20-messaging-infra"
+        required: false
+        default: "main"
+      dapp-frontend-erc20-messaging-version:
+        description: "Version of dapp-frontend-erc20-messaging"
+        required: false
+        default: "main"
 
 jobs:
   infra:
@@ -24,7 +24,7 @@ jobs:
         uses: actions/checkout@v3
         with:
           repository: topos-network/local-erc20-messaging-infra
-          ref: ${{ github.event.inputs.local-erc20-messaging-infra-version }}
+          ref: ${{ github.event_name == 'pull_request' && 'main' || inputs.local-erc20-messaging-infra-version }}
           path: infra
 
       - name: Start local ERC20 messaging infra containers
@@ -53,7 +53,7 @@ jobs:
         uses: actions/checkout@v3
         with:
           repository: topos-network/dapp-frontend-erc20-messaging
-          ref: ${{ github.event.inputs.dapp-frontend-erc20-messaging-version }}
+          ref: ${{ github.event_name == 'pull_request' && 'main' || inputs.dapp-frontend-erc20-messaging-version }}
           path: frontend
 
       - name: Set up NodeJS
