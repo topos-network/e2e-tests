@@ -1,0 +1,117 @@
+name: Frontend ERC20-Messaging
+
+inputs:
+  local-erc20-messaging-infra-version:
+    description: "Version of local-erc20-messaging-infra"
+    required: false
+    default: "main"
+  dapp-frontend-erc20-messaging-version:
+    description: "Version of dapp-frontend-erc20-messaging"
+    required: false
+    default: "main"
+
+on:
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  infra:
+    runs-on: ubuntu-latest
+    environment: devnet-1
+    steps:
+      - name: Checkout local-erc20-messaging-infra repo
+        uses: actions/checkout@v3
+        with:
+          repository: topos-network/local-erc20-messaging-infra
+          ref: ${{ github.event.inputs.local-erc20-messaging-infra-version }}
+          path: infra
+
+      - name: Start local ERC20 messaging infra containers
+        working-directory: infra
+        run: >
+          cat .env &&
+          docker compose --profile executor-service up -d
+        env:
+          PRIVATE_KEY: ${{ secrets.PRIVATE_KEY }}
+          TOKEN_DEPLOYER_SALT: ${{ secrets.TOKEN_DEPLOYER_SALT }}
+          TOPOS_CORE_SALT: ${{ secrets.TOPOS_CORE_SALT }}
+          TOPOS_CORE_PROXY_SALT: ${{ secrets.TOPOS_CORE_PROXY_SALT }}
+          TOPOS_MESSAGING_SALT: ${{ secrets.TOPOS_MESSAGING_SALT }}
+          SUBNET_REGISTRATOR_SALT: ${{ secrets.SUBNET_REGISTRATOR_SALT }}
+
+      - name: Debug containers
+        if: failure()
+        run: docker inspect contracts-edena | grep Image && docker logs contracts-edena
+
+  e2e:
+    runs-on: ubuntu-latest
+    environment: devnet-1
+    needs: infra
+    steps:
+      - name: Checkout dapp-frontend-erc20-messaging repo
+        uses: actions/checkout@v3
+        with:
+          repository: topos-network/dapp-frontend-erc20-messaging
+          ref: ${{ github.event.inputs.dapp-frontend-erc20-messaging-version }}
+          path: frontend
+
+      - name: Set up NodeJS
+        uses: actions/setup-node@v3
+        with:
+          node-version: 18
+          cache: "npm"
+
+      - name: Install dependencies
+        working-directory: frontend
+        run: npm ci
+
+      - name: Install linux dependencies
+        run: |
+          sudo apt-get install --no-install-recommends -y \
+          fluxbox \
+          xvfb
+
+      - name: Build frontend
+        working-directory: frontend
+        run: npm run frontend:build
+        env:
+          VITE_EXECUTOR_SERVICE_ENDPOINT: ${{ vars.VITE_EXECUTOR_SERVICE_ENDPOINT }}
+          VITE_SUBNET_REGISTRATOR_CONTRACT_ADDRESS: ${{ vars.VITE_SUBNET_REGISTRATOR_CONTRACT_ADDRESS }}
+          VITE_TOPOS_MESSAGING_CONTRACT_ADDRESS: ${{ vars.VITE_TOPOS_MESSAGING_CONTRACT_ADDRESS }}
+          VITE_TOPOS_CORE_CONTRACT_ADDRESS: ${{ vars.VITE_TOPOS_CORE_CONTRACT_ADDRESS }}
+          VITE_TOPOS_SUBNET_ENDPOINT: ${{ vars.VITE_TOPOS_SUBNET_ENDPOINT }}
+          VITE_TRACING_OTEL_COLLECTOR_ENDPOINT: ${{ vars.VITE_TRACING_OTEL_COLLECTOR_ENDPOINT }}
+          VITE_TRACING_SERVICE_NAME: ${{ vars.VITE_TRACING_SERVICE_NAME }}
+          VITE_TRACING_SERVICE_VERSION: ${{ vars.VITE_TRACING_SERVICE_VERSION }}
+
+      - name: Run E2E tests
+        working-directory: frontend
+        run: |
+          Xvfb :0 -screen 0 1024x768x24 -listen tcp -ac &
+          fluxbox &
+          npm run test:e2e
+        env:
+          AUTH0_AUDIENCE: ${{ secrets.AUTH0_AUDIENCE }}
+          AUTH0_CLIENT_ID: ${{ secrets.AUTH0_CLIENT_ID }}
+          AUTH0_CLIENT_SECRET: ${{ secrets.AUTH0_CLIENT_SECRET }}
+          AUTH0_ISSUER_URL: ${{ secrets.AUTH0_ISSUER_URL }}
+          PRIVATE_KEY: ${{ secrets.PRIVATE_KEY }}
+          CHAIN_ID: ${{ vars.VITE_TOPOS_SUBNET_CHAIN_ID }}
+          CYPRESS_REMOTE_DEBUGGING_PORT: ${{ vars.CYPRESS_REMOTE_DEBUGGING_PORT }}
+          PORT: 3001
+          NETWORK_NAME: ${{ vars.NETWORK_NAME }}
+          RPC_URL: ${{ vars.VITE_TOPOS_SUBNET_ENDPOINT }}
+          SYMBOL: ${{ vars.VITE_TOPOS_SUBNET_CURRENCY_SYMBOL }}
+          DISPLAY: :0.0
+
+      - name: Archive e2e artifacts
+        uses: actions/upload-artifact@v3
+        working-directory: frontend
+        if: always()
+        with:
+          name: e2e-artifacts
+          path: |
+            packages/frontend/cypress/videos
+            packages/frontend/cypress/screenshots
+        continue-on-error: true
