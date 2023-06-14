@@ -1,0 +1,129 @@
+name: Frontend ERC20-Messaging
+
+on:
+  pull_request:
+    branches:
+      - main
+  workflow_dispatch:
+    inputs:
+      local-erc20-messaging-infra-version:
+        description: "Version of local-erc20-messaging-infra"
+        required: false
+      dapp-frontend-erc20-messaging-version:
+        description: "Version of dapp-frontend-erc20-messaging"
+        required: false
+
+jobs:
+  infra-metadata:
+    uses: ./.github/workflows/util:get-latest-release.yml
+    with:
+      organization: topos-network
+      repository: local-erc20-messaging-infra
+
+  frontend-metadata:
+    uses: ./.github/workflows/util:get-latest-release.yml
+    with:
+      organization: topos-network
+      repository: dapp-frontend-erc20-messaging
+
+  e2e:
+    runs-on: ubuntu-latest
+    environment: devnet-1
+    needs:
+      - infra-metadata
+      - frontend-metadata
+    steps:
+      - name: Display received versions
+        run: >
+          echo "infra-latest-release: ${{ needs.infra-metadata.outputs.latest-release }}" &&
+          echo "infra-input-release: ${{ inputs.local-erc20-messaging-infra-version }}" &&
+          echo "frontend-latest-release: ${{ needs.frontend-metadata.outputs.latest-release }}" &&
+          echo "frontend-input-release: ${{ inputs.dapp-frontend-erc20-messaging-version }}"
+
+      - name: Checkout local-erc20-messaging-infra repo
+        uses: actions/checkout@v3
+        with:
+          repository: topos-network/local-erc20-messaging-infra
+          # We use first the optional passed version, and if empty the latest release
+          ref: ${{ inputs.local-erc20-messaging-infra-version || needs.infra-metadata.outputs.latest-release }}
+          path: infra
+
+      - name: Start local ERC20 messaging infra containers
+        run: >
+          cd infra &&
+          docker compose --profile executor-service up -d
+        env:
+          PRIVATE_KEY: ${{ secrets.PRIVATE_KEY }}
+          TOKEN_DEPLOYER_SALT: ${{ secrets.TOKEN_DEPLOYER_SALT }}
+          TOPOS_CORE_SALT: ${{ secrets.TOPOS_CORE_SALT }}
+          TOPOS_CORE_PROXY_SALT: ${{ secrets.TOPOS_CORE_PROXY_SALT }}
+          ERC20_MESSAGING_SALT: ${{ secrets.ERC20_MESSAGING_SALT }}
+          SUBNET_REGISTRATOR_SALT: ${{ secrets.SUBNET_REGISTRATOR_SALT }}
+
+      - name: Debug containers
+        if: failure()
+        run: docker inspect contracts-edena | grep Image && docker logs contracts-edena
+
+      - name: Checkout dapp-frontend-erc20-messaging repo
+        uses: actions/checkout@v3
+        with:
+          repository: topos-network/dapp-frontend-erc20-messaging
+          # We use first the optional passed version, and if empty the latest release
+          ref: ${{ inputs.dapp-frontend-erc20-messaging-version || needs.frontend-metadata.outputs.latest-release }}
+          path: frontend
+
+      - name: Set up NodeJS
+        uses: actions/setup-node@v3
+        with:
+          node-version: 18
+          cache: "npm"
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Install dependencies
+        working-directory: frontend
+        run: npm ci
+
+      - name: Install linux dependencies
+        run: |
+          sudo apt-get install --no-install-recommends -y \
+          fluxbox \
+          xvfb
+
+      - name: Build frontend
+        working-directory: frontend
+        run: npm run frontend:build
+        env:
+          VITE_EXECUTOR_SERVICE_ENDPOINT: ${{ vars.EXECUTOR_SERVICE_ENDPOINT }}
+          VITE_SUBNET_REGISTRATOR_CONTRACT_ADDRESS: ${{ vars.SUBNET_REGISTRATOR_CONTRACT_ADDRESS }}
+          VITE_ERC20_MESSAGING_CONTRACT_ADDRESS: ${{ vars.ERC20_MESSAGING_CONTRACT_ADDRESS }}
+          VITE_TOPOS_CORE_CONTRACT_ADDRESS: ${{ vars.TOPOS_CORE_CONTRACT_ADDRESS }}
+          VITE_TOPOS_SUBNET_ENDPOINT: ${{ vars.TOPOS_SUBNET_ENDPOINT }}
+          VITE_TRACING_OTEL_COLLECTOR_ENDPOINT: ${{ vars.TRACING_OTEL_COLLECTOR_ENDPOINT }}
+          VITE_TRACING_SERVICE_NAME: dapp-frontend-erc20-messaging
+          VITE_TRACING_SERVICE_VERSION: ${{ vars.TRACING_SERVICE_VERSION }}
+
+      - name: Run E2E tests
+        working-directory: frontend
+        run: |
+          Xvfb :0 -screen 0 1024x768x24 -listen tcp -ac &
+          fluxbox &
+          npm run test:e2e
+        env:
+          AUTH0_AUDIENCE: ${{ secrets.AUTH0_AUDIENCE }}
+          AUTH0_CLIENT_ID: ${{ secrets.AUTH0_CLIENT_ID }}
+          AUTH0_CLIENT_SECRET: ${{ secrets.AUTH0_CLIENT_SECRET }}
+          AUTH0_ISSUER_URL: ${{ secrets.AUTH0_ISSUER_URL }}
+          PRIVATE_KEY: ${{ secrets.PRIVATE_KEY }}
+          CYPRESS_REMOTE_DEBUGGING_PORT: ${{ vars.CYPRESS_REMOTE_DEBUGGING_PORT }}
+          PORT: 3001
+          DISPLAY: :0.0
+
+      - name: Archive e2e artifacts
+        uses: actions/upload-artifact@v3
+        if: always()
+        with:
+          name: e2e-artifacts
+          path: |
+            frontend/packages/frontend/cypress/videos
+            frontend/packages/frontend/cypress/screenshots
+        continue-on-error: true

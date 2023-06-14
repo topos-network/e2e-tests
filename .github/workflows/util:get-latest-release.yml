@@ -1,0 +1,35 @@
+name: Get latest release of a repository
+
+on:
+  workflow_call:
+    inputs:
+      organization:
+        description: "Organization of the repository to get the latest release of"
+        required: true
+        type: string
+      repository:
+        description: "Repository to get the latest release of"
+        required: true
+        type: string
+    outputs:
+      latest-release:
+        description: "The latest release of the repository"
+        value: ${{ jobs.get-latest-release.outputs.latest-release }}
+
+jobs:
+  get-latest-release:
+    runs-on: ubuntu-latest
+    outputs:
+      latest-release: ${{ steps.script.outputs.result }}
+    steps:
+      - uses: actions/github-script@v6
+        id: script
+        with:
+          result-encoding: string
+          script: |
+            const { data } = await github.rest.repos.getLatestRelease({
+              owner: '${{ inputs.organization }}',
+              repo: '${{ inputs.repository }}',
+            })
+
+            return data.tag_name
