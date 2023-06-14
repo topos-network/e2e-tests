@@ -16,7 +16,7 @@ on:
         default: "main"
 
 jobs:
-  infra:
+  e2e:
     runs-on: ubuntu-latest
     environment: devnet-1
     steps:
@@ -25,33 +25,30 @@ jobs:
         with:
           repository: topos-network/local-erc20-messaging-infra
           ref: ${{ github.event_name == 'pull_request' && 'main' || inputs.local-erc20-messaging-infra-version }}
+          path: infra
 
       - name: Start local ERC20 messaging infra containers
         run: >
-          cat .env &&
+          cd infra &&
           docker compose --profile executor-service up -d
         env:
           PRIVATE_KEY: ${{ secrets.PRIVATE_KEY }}
           TOKEN_DEPLOYER_SALT: ${{ secrets.TOKEN_DEPLOYER_SALT }}
           TOPOS_CORE_SALT: ${{ secrets.TOPOS_CORE_SALT }}
           TOPOS_CORE_PROXY_SALT: ${{ secrets.TOPOS_CORE_PROXY_SALT }}
-          TOPOS_MESSAGING_SALT: ${{ secrets.TOPOS_MESSAGING_SALT }}
+          ERC20_MESSAGING_SALT: ${{ secrets.ERC20_MESSAGING_SALT }}
           SUBNET_REGISTRATOR_SALT: ${{ secrets.SUBNET_REGISTRATOR_SALT }}
 
       - name: Debug containers
         if: failure()
         run: docker inspect contracts-edena | grep Image && docker logs contracts-edena
 
-  e2e:
-    runs-on: ubuntu-latest
-    environment: devnet-1
-    needs: infra
-    steps:
       - name: Checkout dapp-frontend-erc20-messaging repo
         uses: actions/checkout@v3
         with:
           repository: topos-network/dapp-frontend-erc20-messaging
           ref: ${{ github.event_name == 'pull_request' && 'main' || inputs.dapp-frontend-erc20-messaging-version }}
+          path: frontend
 
       - name: Set up NodeJS
         uses: actions/setup-node@v3
@@ -60,6 +57,7 @@ jobs:
           cache: "npm"
 
       - name: Install dependencies
+        working-directory: frontend
         run: npm ci
 
       - name: Install linux dependencies
@@ -69,18 +67,20 @@ jobs:
           xvfb
 
       - name: Build frontend
+        working-directory: frontend
         run: npm run frontend:build
         env:
-          VITE_EXECUTOR_SERVICE_ENDPOINT: ${{ vars.VITE_EXECUTOR_SERVICE_ENDPOINT }}
-          VITE_SUBNET_REGISTRATOR_CONTRACT_ADDRESS: ${{ vars.VITE_SUBNET_REGISTRATOR_CONTRACT_ADDRESS }}
-          VITE_TOPOS_MESSAGING_CONTRACT_ADDRESS: ${{ vars.VITE_TOPOS_MESSAGING_CONTRACT_ADDRESS }}
-          VITE_TOPOS_CORE_CONTRACT_ADDRESS: ${{ vars.VITE_TOPOS_CORE_CONTRACT_ADDRESS }}
-          VITE_TOPOS_SUBNET_ENDPOINT: ${{ vars.VITE_TOPOS_SUBNET_ENDPOINT }}
-          VITE_TRACING_OTEL_COLLECTOR_ENDPOINT: ${{ vars.VITE_TRACING_OTEL_COLLECTOR_ENDPOINT }}
-          VITE_TRACING_SERVICE_NAME: ${{ vars.VITE_TRACING_SERVICE_NAME }}
-          VITE_TRACING_SERVICE_VERSION: ${{ vars.VITE_TRACING_SERVICE_VERSION }}
+          VITE_EXECUTOR_SERVICE_ENDPOINT: ${{ vars.EXECUTOR_SERVICE_ENDPOINT }}
+          VITE_SUBNET_REGISTRATOR_CONTRACT_ADDRESS: ${{ vars.SUBNET_REGISTRATOR_CONTRACT_ADDRESS }}
+          VITE_ERC20_MESSAGING_CONTRACT_ADDRESS: ${{ vars.ERC20_MESSAGING_CONTRACT_ADDRESS }}
+          VITE_TOPOS_CORE_CONTRACT_ADDRESS: ${{ vars.TOPOS_CORE_CONTRACT_ADDRESS }}
+          VITE_TOPOS_SUBNET_ENDPOINT: ${{ vars.TOPOS_SUBNET_ENDPOINT }}
+          VITE_TRACING_OTEL_COLLECTOR_ENDPOINT: ${{ vars.TRACING_OTEL_COLLECTOR_ENDPOINT }}
+          VITE_TRACING_SERVICE_NAME: dapp-frontend-erc20-messaging
+          VITE_TRACING_SERVICE_VERSION: ${{ vars.TRACING_SERVICE_VERSION }}
 
       - name: Run E2E tests
+        working-directory: frontend
         run: |
           Xvfb :0 -screen 0 1024x768x24 -listen tcp -ac &
           fluxbox &
@@ -91,12 +91,8 @@ jobs:
           AUTH0_CLIENT_SECRET: ${{ secrets.AUTH0_CLIENT_SECRET }}
           AUTH0_ISSUER_URL: ${{ secrets.AUTH0_ISSUER_URL }}
           PRIVATE_KEY: ${{ secrets.PRIVATE_KEY }}
-          CHAIN_ID: ${{ vars.VITE_TOPOS_SUBNET_CHAIN_ID }}
           CYPRESS_REMOTE_DEBUGGING_PORT: ${{ vars.CYPRESS_REMOTE_DEBUGGING_PORT }}
           PORT: 3001
-          NETWORK_NAME: ${{ vars.NETWORK_NAME }}
-          RPC_URL: ${{ vars.VITE_TOPOS_SUBNET_ENDPOINT }}
-          SYMBOL: ${{ vars.VITE_TOPOS_SUBNET_CURRENCY_SYMBOL }}
           DISPLAY: :0.0
 
       - name: Archive e2e artifacts
@@ -105,6 +101,6 @@ jobs:
         with:
           name: e2e-artifacts
           path: |
-            packages/frontend/cypress/videos
-            packages/frontend/cypress/screenshots
+            frontend/packages/frontend/cypress/videos
+            frontend/packages/frontend/cypress/screenshots
         continue-on-error: true
