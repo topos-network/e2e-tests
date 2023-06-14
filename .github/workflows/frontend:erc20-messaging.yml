@@ -9,22 +9,43 @@ on:
       local-erc20-messaging-infra-version:
         description: "Version of local-erc20-messaging-infra"
         required: false
-        default: "main"
       dapp-frontend-erc20-messaging-version:
         description: "Version of dapp-frontend-erc20-messaging"
         required: false
-        default: "main"
 
 jobs:
+  infra-metadata:
+    uses: ./.github/workflows/util:get-latest-release.yml
+    with:
+      organization: topos-network
+      repository: local-erc20-messaging-infra
+
+  frontend-metadata:
+    uses: ./.github/workflows/util:get-latest-release.yml
+    with:
+      organization: topos-network
+      repository: dapp-frontend-erc20-messaging
+
   e2e:
     runs-on: ubuntu-latest
     environment: devnet-1
+    needs:
+      - infra-metadata
+      - frontend-metadata
     steps:
+      - name: Display received versions
+        run: >
+          echo "infra-latest-release: ${{ needs.infra-metadata.outputs.latest-release }}" &&
+          echo "infra-input-release: ${{ inputs.local-erc20-messaging-infra-version }}" &&
+          echo "frontend-latest-release: ${{ needs.frontend-metadata.outputs.latest-release }}" &&
+          echo "frontend-input-release: ${{ inputs.dapp-frontend-erc20-messaging-version }}"
+
       - name: Checkout local-erc20-messaging-infra repo
         uses: actions/checkout@v3
         with:
           repository: topos-network/local-erc20-messaging-infra
-          ref: ${{ github.event_name == 'pull_request' && 'main' || inputs.local-erc20-messaging-infra-version }}
+          # We use first the optional passed version, and if empty the latest release
+          ref: ${{ inputs.local-erc20-messaging-infra-version || needs.infra-metadata.outputs.latest-release }}
           path: infra
 
       - name: Start local ERC20 messaging infra containers
@@ -47,7 +68,8 @@ jobs:
         uses: actions/checkout@v3
         with:
           repository: topos-network/dapp-frontend-erc20-messaging
-          ref: ${{ github.event_name == 'pull_request' && 'main' || inputs.dapp-frontend-erc20-messaging-version }}
+          # We use first the optional passed version, and if empty the latest release
+          ref: ${{ inputs.dapp-frontend-erc20-messaging-version || needs.frontend-metadata.outputs.latest-release }}
           path: frontend
 
       - name: Set up NodeJS
