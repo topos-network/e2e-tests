@@ -62,7 +62,7 @@ jobs:
           TOPOS_CORE_PROXY_SALT: ${{ secrets.TOPOS_CORE_PROXY_SALT }}
           ERC20_MESSAGING_SALT: ${{ secrets.ERC20_MESSAGING_SALT }}
           SUBNET_REGISTRATOR_SALT: ${{ secrets.SUBNET_REGISTRATOR_SALT }}
-          TOPOS_MESSAGING_PROTOCOL_CONTRACTS_VERSION: ${{ inputs.topos-smart-contracts-docker-tag || "latest" }}
+          TOPOS_MESSAGING_PROTOCOL_CONTRACTS_VERSION: ${{ inputs.topos-smart-contracts-docker-tag || 'latest' }}
 
       - name: Debug containers
         if: failure()
