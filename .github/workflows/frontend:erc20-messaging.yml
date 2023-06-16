@@ -6,11 +6,14 @@ on:
       - main
   workflow_dispatch:
     inputs:
-      local-erc20-messaging-infra-version:
-        description: "Version of local-erc20-messaging-infra"
+      local-erc20-messaging-infra-ref:
+        description: "Git ref of local-erc20-messaging-infra"
         required: false
-      dapp-frontend-erc20-messaging-version:
-        description: "Version of dapp-frontend-erc20-messaging"
+      dapp-frontend-erc20-messaging-ref:
+        description: "Git ref of dapp-frontend-erc20-messaging"
+        required: false
+      topos-smart-contracts-docker-tag:
+        description: "Docker tag of topos-smart-contracts"
         required: false
 
 jobs:
@@ -36,16 +39,16 @@ jobs:
       - name: Display received versions
         run: >
           echo "infra-latest-release: ${{ needs.infra-metadata.outputs.latest-release }}" &&
-          echo "infra-input-release: ${{ inputs.local-erc20-messaging-infra-version }}" &&
+          echo "infra-input-release: ${{ inputs.local-erc20-messaging-infra-ref }}" &&
           echo "frontend-latest-release: ${{ needs.frontend-metadata.outputs.latest-release }}" &&
-          echo "frontend-input-release: ${{ inputs.dapp-frontend-erc20-messaging-version }}"
+          echo "frontend-input-release: ${{ inputs.dapp-frontend-erc20-messaging-ref }}"
 
       - name: Checkout local-erc20-messaging-infra repo
         uses: actions/checkout@v3
         with:
           repository: topos-network/local-erc20-messaging-infra
           # We use first the optional passed version, and if empty the latest release
-          ref: ${{ inputs.local-erc20-messaging-infra-version || needs.infra-metadata.outputs.latest-release }}
+          ref: ${{ inputs.local-erc20-messaging-infra-ref || needs.infra-metadata.outputs.latest-release }}
           path: infra
 
       - name: Start local ERC20 messaging infra containers
@@ -59,6 +62,7 @@ jobs:
           TOPOS_CORE_PROXY_SALT: ${{ secrets.TOPOS_CORE_PROXY_SALT }}
           ERC20_MESSAGING_SALT: ${{ secrets.ERC20_MESSAGING_SALT }}
           SUBNET_REGISTRATOR_SALT: ${{ secrets.SUBNET_REGISTRATOR_SALT }}
+          TOPOS_MESSAGING_PROTOCOL_CONTRACTS_VERSION: ${{ inputs.topos-smart-contracts-docker-tag || "latest" }}
 
       - name: Debug containers
         if: failure()
@@ -69,7 +73,7 @@ jobs:
         with:
           repository: topos-network/dapp-frontend-erc20-messaging
           # We use first the optional passed version, and if empty the latest release
-          ref: ${{ inputs.dapp-frontend-erc20-messaging-version || needs.frontend-metadata.outputs.latest-release }}
+          ref: ${{ inputs.dapp-frontend-erc20-messaging-ref || needs.frontend-metadata.outputs.latest-release }}
           path: frontend
 
       - name: Set up NodeJS
