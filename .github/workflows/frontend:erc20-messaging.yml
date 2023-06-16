@@ -74,6 +74,7 @@ jobs:
 
       - name: Get contracts .env file and expose contract addresses
         run: |
+          mkdir ./contracts
           docker cp contracts-topos:/contracts/.env ./contracts/.env
           source ./contracts/.env
           echo "SUBNET_REGISTRATOR_CONTRACT_ADDRESS=${SUBNET_REGISTRATOR_CONTRACT_ADDRESS}" >> $GITHUB_ENV
