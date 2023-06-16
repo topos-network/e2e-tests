@@ -15,9 +15,13 @@ on:
       topos-smart-contracts-docker-tag:
         description: "Docker tag of topos-smart-contracts"
         required: false
+      executor-service-docker-tag:
+        description: "Docker tag of executor-service"
+        required: false
 
 env:
   CONTRACTS_DOCKER_TAG: ${{ inputs.topos-smart-contracts-docker-tag || 'latest' }}
+  EXECUTOR_SERVICE_DOCKER_TAG: ${{ inputs.executor-service-docker-tag || 'latest' }}
 
 jobs:
   infra-metadata:
@@ -47,6 +51,7 @@ jobs:
           echo "infra ref: ${{ env.INFRA_REF }}" &&
           echo "frontend ref: ${{ env.FRONTEND_REF }}" &&
           echo "contracts docker tag: ${{ env.CONTRACTS_DOCKER_TAG }}"
+          echo "executor service docker tag: ${{ env.EXECUTOR_SERVICE_DOCKER_TAG }}"
 
       - name: Checkout local-erc20-messaging-infra repo
         uses: actions/checkout@v3
@@ -67,6 +72,7 @@ jobs:
           ERC20_MESSAGING_SALT: ${{ secrets.ERC20_MESSAGING_SALT }}
           SUBNET_REGISTRATOR_SALT: ${{ secrets.SUBNET_REGISTRATOR_SALT }}
           TOPOS_MESSAGING_PROTOCOL_CONTRACTS_VERSION: ${{ env.CONTRACTS_DOCKER_TAG }}
+          EXECUTOR_SERVICE_VERSION: ${{ env.EXECUTOR_SERVICE_DOCKER_TAG }}
 
       - name: Debug containers
         if: failure()
