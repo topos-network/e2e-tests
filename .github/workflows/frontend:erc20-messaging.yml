@@ -75,6 +75,9 @@ jobs:
           EXECUTOR_SERVICE_VERSION: ${{ env.EXECUTOR_SERVICE_DOCKER_TAG }}
 
       - name: Debug containers
+        run: docker logs topos-sequencer
+
+      - name: Debug containers
         if: failure()
         run: docker inspect contracts-edena | grep Image && docker logs contracts-edena
 
