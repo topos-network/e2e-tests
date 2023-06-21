@@ -140,9 +140,17 @@ jobs:
           PORT: 3001
           DISPLAY: :0.0
 
-      - name: Debug sequencer
+      - name: Debug sending sequencer
         if: failure()
         run: docker logs topos-sequencer
+
+      - name: Debug receiving sequencer
+        if: failure()
+        run: docker logs incal-sequencer
+
+      - name: Debug TCE boot node
+        if: failure()
+        run: docker logs infra-tce-boot-1
 
       - name: Debug executor service
         if: failure()
