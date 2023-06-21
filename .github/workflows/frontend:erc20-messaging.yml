@@ -140,6 +140,10 @@ jobs:
           PORT: 3001
           DISPLAY: :0.0
 
+      - name: Debug executor service
+        if: failure()
+        run: docker logs executor-service
+
       - name: Archive e2e artifacts
         uses: actions/upload-artifact@v3
         if: always()
