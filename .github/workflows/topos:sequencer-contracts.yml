@@ -12,12 +12,16 @@ on:
       topos-smart-contracts-ref:
         description: "Git ref of topos-smart-contracts"
         required: false
+      polygon-edge-docker-tag:
+        description: "Docker tag of polygon-edge"
+        required: false
 
 env:
   CARGO_TERM_COLOR: always
   RUSTFLAGS: -Dwarnings
   RUST_BACKTRACE: 1
   rust_clippy: 1.62.1
+  POLYGON_EDGE_DOCKER_TAG: ${{ inputs.polygon-edge-docker-tag || 'develop' }}
 
 jobs:
   # Wait for topos to have a release pipeline. In the meantime => use main if no input
@@ -57,7 +61,8 @@ jobs:
       - name: Display stack component versions
         run: >
           echo "topos ref: ${{ env.TOPOS_REF }}" &&
-          echo "contracts ref: ${{ env.CONTRACTS_REF }}"
+          echo "contracts ref: ${{ env.CONTRACTS_REF }}" &&
+          echo "contracts docker tag: ${{ env.POLYGON_EDGE_DOCKER_TAG }}"
 
       - name: Checkout topos repo
         uses: actions/checkout@v3
@@ -78,6 +83,10 @@ jobs:
 
       - name: Install Protoc
         uses: arduino/setup-protoc@v1
+
+      - name: Pull polygon-edge docker image
+        run: |
+          docker pull ghcr.io/topos-network/polygon-edge:${{ env.POLYGON_EDGE_DOCKER_TAG }}
 
       - name: Checkout topos-smart-contracts repo
         uses: actions/checkout@v3
