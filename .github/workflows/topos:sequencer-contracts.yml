@@ -47,6 +47,8 @@ jobs:
     env:
       TOPOS_REF: ${{ inputs.topos-ref || 'main' }}
       CONTRACTS_REF: ${{ inputs.topos-smart-contracts-ref || needs.contracts-metadata.outputs.latest-release }}
+    needs:
+      - contracts-metadata
     steps:
       - name: Display stack component versions
         run: >
