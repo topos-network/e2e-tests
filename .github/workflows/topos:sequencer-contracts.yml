@@ -20,11 +20,12 @@ env:
   rust_clippy: 1.62.1
 
 jobs:
-  topos-metadata:
-    uses: ./.github/workflows/util:get-latest-release.yml
-    with:
-      organization: topos-network
-      repository: topos
+  # Wait for topos to have a release pipeline. In the meantime => use main if no input
+  # topos-metadata:
+  #   uses: ./.github/workflows/util:get-latest-release.yml
+  #   with:
+  #     organization: topos-network
+  #     repository: topos
 
   contracts-metadata:
     uses: ./.github/workflows/util:get-latest-release.yml
@@ -44,7 +45,7 @@ jobs:
     name: ${{ matrix.version }}
     runs-on: ${{ matrix.target.os }}
     env:
-      TOPOS_REF: ${{ inputs.topos-ref || needs.topos-metadata.outputs.latest-release }}
+      TOPOS_REF: ${{ inputs.topos-ref || 'main' }}
       CONTRACTS_REF: ${{ inputs.topos-smart-contracts-ref || needs.contracts-metadata.outputs.latest-release }}
     steps:
       - name: Display stack component versions
