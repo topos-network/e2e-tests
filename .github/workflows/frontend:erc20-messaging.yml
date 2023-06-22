@@ -46,10 +46,10 @@ jobs:
       - infra-metadata
       - frontend-metadata
     steps:
-      - name: Display received versions
-        run: >
-          echo "infra ref: ${{ env.INFRA_REF }}" &&
-          echo "frontend ref: ${{ env.FRONTEND_REF }}" &&
+      - name: Display stack component versions
+        run: |
+          echo "infra ref: ${{ env.INFRA_REF }}"
+          echo "frontend ref: ${{ env.FRONTEND_REF }}"
           echo "contracts docker tag: ${{ env.CONTRACTS_DOCKER_TAG }}"
           echo "executor service docker tag: ${{ env.EXECUTOR_SERVICE_DOCKER_TAG }}"
 
@@ -78,7 +78,7 @@ jobs:
         if: failure()
         run: docker inspect contracts-edena | grep Image && docker logs contracts-edena
 
-      - name: Get contracts .env file and expose contract addresses
+      - name: Get contracts .env file and expose contract addresses for frontend
         run: |
           mkdir ./contracts
           docker cp contracts-topos:/contracts/.env ./contracts/.env
@@ -139,6 +139,22 @@ jobs:
           CYPRESS_REMOTE_DEBUGGING_PORT: ${{ vars.CYPRESS_REMOTE_DEBUGGING_PORT }}
           PORT: 3001
           DISPLAY: :0.0
+
+      - name: Debug sending sequencer
+        if: failure()
+        run: docker logs topos-sequencer
+
+      - name: Debug receiving sequencer
+        if: failure()
+        run: docker logs incal-sequencer
+
+      - name: Debug TCE boot node
+        if: failure()
+        run: docker logs infra-tce-boot-1
+
+      - name: Debug executor service
+        if: failure()
+        run: docker logs executor-service
 
       - name: Archive e2e artifacts
         uses: actions/upload-artifact@v3
