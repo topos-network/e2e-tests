@@ -62,7 +62,7 @@ jobs:
         run: >
           echo "topos ref: ${{ env.TOPOS_REF }}" &&
           echo "contracts ref: ${{ env.CONTRACTS_REF }}" &&
-          echo "contracts docker tag: ${{ env.POLYGON_EDGE_DOCKER_TAG }}"
+          echo "polygon-edge docker tag: ${{ env.POLYGON_EDGE_DOCKER_TAG }}"
 
       - name: Checkout topos repo
         uses: actions/checkout@v3

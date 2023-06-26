@@ -17,6 +17,7 @@ E2E-Tests is the end-to-end test suite testing all components of the Topos stack
 </div>
 
 ![example workflow](https://github.com/topos-network/e2e-tests/actions/workflows/frontend:erc20-messaging.yml/badge.svg)
+![example workflow](https://github.com/topos-network/e2e-tests/actions/workflows/topos:sequencer-contracts.yml/badge.svg)
 [![](https://dcbadge.vercel.app/api/server/7HZ8F8ykBT?style=flat)](https://discord.gg/7HZ8F8ykBT)
 
 ## Development
