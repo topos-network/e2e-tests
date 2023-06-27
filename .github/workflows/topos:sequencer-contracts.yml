@@ -82,7 +82,9 @@ jobs:
         uses: Swatinem/rust-cache@v1
 
       - name: Install Protoc
-        uses: arduino/setup-protoc@v1
+        uses: arduino/setup-protoc@v2
+        with:
+          repo-token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Pull polygon-edge docker image
         run: |
