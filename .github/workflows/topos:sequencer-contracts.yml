@@ -28,13 +28,13 @@ jobs:
   # topos-metadata:
   #   uses: ./.github/workflows/util:get-latest-release.yml
   #   with:
-  #     organization: topos-network
+  #     organization: topos-protocol
   #     repository: topos
 
   contracts-metadata:
     uses: ./.github/workflows/util:get-latest-release.yml
     with:
-      organization: topos-network
+      organization: topos-protocol
       repository: topos-smart-contracts
 
   e2e:
@@ -67,7 +67,7 @@ jobs:
       - name: Checkout topos repo
         uses: actions/checkout@v3
         with:
-          repository: topos-network/topos
+          repository: topos-protocol/topos
           ref: ${{ env.TOPOS_REF }}
           path: topos
 
@@ -88,12 +88,12 @@ jobs:
 
       - name: Pull polygon-edge docker image
         run: |
-          docker pull ghcr.io/topos-network/polygon-edge:${{ env.POLYGON_EDGE_DOCKER_TAG }}
+          docker pull ghcr.io/topos-protocol/polygon-edge:${{ env.POLYGON_EDGE_DOCKER_TAG }}
 
       - name: Checkout topos-smart-contracts repo
         uses: actions/checkout@v3
         with:
-          repository: topos-network/topos-smart-contracts
+          repository: topos-protocol/topos-smart-contracts
           ref: ${{ env.CONTRACTS_REF }}
           path: contracts
 
