@@ -27,13 +27,13 @@ jobs:
   infra-metadata:
     uses: ./.github/workflows/util:get-latest-release.yml
     with:
-      organization: topos-network
+      organization: topos-protocol
       repository: local-erc20-messaging-infra
 
   frontend-metadata:
     uses: ./.github/workflows/util:get-latest-release.yml
     with:
-      organization: topos-network
+      organization: topos-protocol
       repository: dapp-frontend-erc20-messaging
 
   e2e:
@@ -56,7 +56,7 @@ jobs:
       - name: Checkout local-erc20-messaging-infra repo
         uses: actions/checkout@v3
         with:
-          repository: topos-network/local-erc20-messaging-infra
+          repository: topos-protocol/local-erc20-messaging-infra
           ref: ${{ env.INFRA_REF }}
           path: infra
 
@@ -90,7 +90,7 @@ jobs:
       - name: Checkout dapp-frontend-erc20-messaging repo
         uses: actions/checkout@v3
         with:
-          repository: topos-network/dapp-frontend-erc20-messaging
+          repository: topos-protocol/dapp-frontend-erc20-messaging
           ref: ${{ env.FRONTEND_REF }}
           path: frontend
 
