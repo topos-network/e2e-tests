@@ -54,6 +54,7 @@ jobs:
         run: |
           echo "infra ref: ${{ env.INFRA_REF }}"
           echo "frontend ref: ${{ env.FRONTEND_REF }}"
+          echo "topos docker tag: ${{ env.TOPOS_DOCKER_TAG }}"
           echo "contracts docker tag: ${{ env.CONTRACTS_DOCKER_TAG }}"
           echo "executor service docker tag: ${{ env.EXECUTOR_SERVICE_DOCKER_TAG }}"
 
