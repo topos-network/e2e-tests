@@ -12,6 +12,9 @@ on:
       dapp-frontend-erc20-messaging-ref:
         description: "Git ref of dapp-frontend-erc20-messaging"
         required: false
+      topos-docker-tag:
+        description: "Docker tag of topos"
+        required: false
       topos-smart-contracts-docker-tag:
         description: "Docker tag of topos-smart-contracts"
         required: false
@@ -20,6 +23,7 @@ on:
         required: false
 
 env:
+  TOPOS_DOCKER_TAG: ${{ inputs.topos-docker-tag || 'main-tce' }}
   CONTRACTS_DOCKER_TAG: ${{ inputs.topos-smart-contracts-docker-tag || 'latest' }}
   EXECUTOR_SERVICE_DOCKER_TAG: ${{ inputs.executor-service-docker-tag || 'latest' }}
 
@@ -71,6 +75,7 @@ jobs:
           TOPOS_CORE_PROXY_SALT: ${{ secrets.TOPOS_CORE_PROXY_SALT }}
           ERC20_MESSAGING_SALT: ${{ secrets.ERC20_MESSAGING_SALT }}
           SUBNET_REGISTRATOR_SALT: ${{ secrets.SUBNET_REGISTRATOR_SALT }}
+          TOPOS_VERSION: ${{ env.TOPOS_DOCKER_TAG }}
           TOPOS_MESSAGING_PROTOCOL_CONTRACTS_VERSION: ${{ env.CONTRACTS_DOCKER_TAG }}
           EXECUTOR_SERVICE_VERSION: ${{ env.EXECUTOR_SERVICE_DOCKER_TAG }}
 
