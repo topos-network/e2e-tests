@@ -146,6 +146,10 @@ jobs:
           PORT: 3001
           DISPLAY: :0.0
 
+      - name: Debug docker show infra containers
+        if: failure()
+        run: docker ps
+
       - name: Debug sending sequencer
         if: failure()
         run: docker logs topos-sequencer
@@ -157,6 +161,22 @@ jobs:
       - name: Debug TCE boot node
         if: failure()
         run: docker logs infra-tce-boot-1
+
+      - name: Debug TCE peer node 1
+        if: failure()
+        run: docker logs infra-tce-peer-1
+
+      - name: Debug TCE peer node 2
+        if: failure()
+        run: docker logs infra-tce-peer-2
+
+      - name: Debug TCE peer node 3
+        if: failure()
+        run: docker logs infra-tce-peer-3
+
+      - name: Debug TCE peer node 4
+        if: failure()
+        run: docker logs infra-tce-peer-4
 
       - name: Debug executor service
         if: failure()
