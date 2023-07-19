@@ -4,23 +4,28 @@ on:
   pull_request:
     branches:
       - main
-  workflow_dispatch:
+  workflow_call:
     inputs:
       local-erc20-messaging-infra-ref:
         description: "Git ref of local-erc20-messaging-infra"
         required: false
+        type: string
       dapp-frontend-erc20-messaging-ref:
         description: "Git ref of dapp-frontend-erc20-messaging"
         required: false
+        type: string
       topos-docker-tag:
         description: "Docker tag of topos"
         required: false
+        type: string
       topos-smart-contracts-docker-tag:
         description: "Docker tag of topos-smart-contracts"
         required: false
+        type: string
       executor-service-docker-tag:
         description: "Docker tag of executor-service"
         required: false
+        type: string
 
 env:
   TOPOS_DOCKER_TAG: ${{ inputs.topos-docker-tag || 'main-tce' }}
