@@ -167,6 +167,7 @@ jobs:
         with:
           name: e2e-artifacts
           path: |
-            frontend/packages/frontend/cypress/videos
-            frontend/packages/frontend/cypress/screenshots
+            docker/videos
+            docker/videos-ci
+            docker/screenshots
         continue-on-error: true
