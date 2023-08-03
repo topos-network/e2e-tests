@@ -59,6 +59,20 @@ jobs:
           echo "contracts docker tag: ${{ env.CONTRACTS_DOCKER_TAG }}"
           echo "executor service docker tag: ${{ env.EXECUTOR_SERVICE_DOCKER_TAG }}"
 
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v2
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v2
+
+      - name: Cache Docker layers
+        uses: actions/cache@v2
+        with:
+          path: /tmp/.buildx-cache
+          key: ${{ runner.os }}-buildx-${{ github.sha }}
+          restore-keys: |
+            ${{ runner.os }}-buildx-
+
       - name: Checkout local-erc20-messaging-infra repo
         uses: actions/checkout@v3
         with:
