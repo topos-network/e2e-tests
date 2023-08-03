@@ -104,7 +104,7 @@ jobs:
       - name: Run e2e tests
         run: >
           cd frontend &&
-          docker compose -f docker-compose.ci.yml up
+          docker compose -f docker-compose.ci.yml up --attach synpress
         env:
           COMPOSE_DOCKER_CLI_BUILD: 1
           DOCKER_BUILDKIT: 1
