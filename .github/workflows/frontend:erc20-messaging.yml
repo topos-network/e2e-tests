@@ -181,7 +181,7 @@ jobs:
         with:
           name: e2e-artifacts
           path: |
-            docker/videos
-            docker/videos-ci
-            docker/screenshots
+            frontend/docker/videos
+            frontend/docker/videos-ci
+            frontend/docker/screenshots
         continue-on-error: true
