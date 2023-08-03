@@ -1,9 +1,9 @@
 name: Frontend ERC20-Messaging
 
 on:
-  pull_request:
-    branches:
-      - main
+  # pull_request:
+  #   branches:
+  #     - main
   workflow_dispatch:
     inputs:
       local-erc20-messaging-infra-ref:
@@ -102,7 +102,8 @@ jobs:
           path: frontend
 
       - name: Run e2e tests
-        run: |
+        run: >
+          cd frontend &&
           docker compose -f docker-compose.ci.yml up
         env:
           COMPOSE_DOCKER_CLI_BUILD: 1
