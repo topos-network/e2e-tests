@@ -96,7 +96,7 @@ jobs:
 
       - name: Debug containers
         if: failure()
-        run: docker inspect contracts-edena | grep Image && docker logs contracts-edena
+        run: docker inspect contracts-topos | grep Image && docker logs contracts-topos
 
       - name: Get contracts .env file and expose contract addresses for frontend
         run: |
