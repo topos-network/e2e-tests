@@ -23,7 +23,7 @@ on:
         required: false
 
 env:
-  TOPOS_DOCKER_TAG: ${{ inputs.topos-docker-tag || 'main' }}
+  TOPOS_DOCKER_TAG: ${{ inputs.topos-docker-tag || 'latest' }}
   CONTRACTS_DOCKER_TAG: ${{ inputs.topos-smart-contracts-docker-tag || 'latest' }}
   EXECUTOR_SERVICE_DOCKER_TAG: ${{ inputs.executor-service-docker-tag || 'latest' }}
 
