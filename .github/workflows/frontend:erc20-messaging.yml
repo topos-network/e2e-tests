@@ -151,25 +151,25 @@ jobs:
         if: failure()
         run: docker logs incal-sequencer
 
-      - name: Debug TCE boot node
+      - name: Debug TCE peer 1 (boot node)
         if: failure()
-        run: docker logs infra-tce-boot-1
-
-      - name: Debug TCE peer node 1
-        if: failure()
-        run: docker logs infra-tce-peer-1
+        run: docker logs tce-peer-1
 
       - name: Debug TCE peer node 2
         if: failure()
-        run: docker logs infra-tce-peer-2
+        run: docker logs tce-peer-2
 
       - name: Debug TCE peer node 3
         if: failure()
-        run: docker logs infra-tce-peer-3
+        run: docker logs tce-peer-3
 
       - name: Debug TCE peer node 4
         if: failure()
-        run: docker logs infra-tce-peer-4
+        run: docker logs tce-peer-4
+
+      - name: Debug TCE peer node 5
+        if: failure()
+        run: docker logs tce-peer-5
 
       - name: Debug executor service
         if: failure()
