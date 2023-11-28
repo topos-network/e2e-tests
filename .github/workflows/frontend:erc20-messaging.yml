@@ -153,23 +153,19 @@ jobs:
 
       - name: Debug TCE boot node
         if: failure()
-        run: docker logs infra-tce-boot-1
-
-      - name: Debug TCE peer node 1
-        if: failure()
-        run: docker logs infra-tce-peer-1
+        run: docker logs topos-node-1
 
       - name: Debug TCE peer node 2
         if: failure()
-        run: docker logs infra-tce-peer-2
+        run: docker logs topos-node-2
 
       - name: Debug TCE peer node 3
         if: failure()
-        run: docker logs infra-tce-peer-3
+        run: docker logs topos-node-3
 
       - name: Debug TCE peer node 4
         if: failure()
-        run: docker logs infra-tce-peer-4
+        run: docker logs topos-node-4
 
       - name: Debug executor service
         if: failure()
