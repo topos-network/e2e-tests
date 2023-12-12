@@ -68,6 +68,12 @@ jobs:
           source .env &&
           ./tests/network.sh start
         env:
+          PRIVATE_KEY: ${{ secrets.PRIVATE_KEY }}
+          TOKEN_DEPLOYER_SALT: ${{ secrets.TOKEN_DEPLOYER_SALT }}
+          TOPOS_CORE_SALT: ${{ secrets.TOPOS_CORE_SALT }}
+          TOPOS_CORE_PROXY_SALT: ${{ secrets.TOPOS_CORE_PROXY_SALT }}
+          ERC20_MESSAGING_SALT: ${{ secrets.ERC20_MESSAGING_SALT }}
+          SUBNET_REGISTRATOR_SALT: ${{ secrets.SUBNET_REGISTRATOR_SALT }}        
           TOPOS_VERSION: ${{ env.TOPOS_DOCKER_TAG }}
           TOPOS_MESSAGING_PROTOCOL_CONTRACTS_VERSION: ${{ env.CONTRACTS_DOCKER_TAG }}
 
