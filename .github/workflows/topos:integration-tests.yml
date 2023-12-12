@@ -1,0 +1,144 @@
+name: Topos Integration Tests
+
+on:
+  pull_request:
+    branches:
+      - main
+  workflow_dispatch:
+    inputs:
+      local-erc20-messaging-infra-ref:
+        description: "Git ref of local-erc20-messaging-infra"
+        required: false
+      topos-docker-tag:
+        description: "Docker tag of topos"
+        required: false
+      topos-smart-contracts-docker-tag:
+        description: "Docker tag of topos-smart-contracts"
+        required: false
+
+env:
+  TOPOS_DOCKER_TAG: ${{ inputs.topos-docker-tag || 'latest' }}
+  CONTRACTS_DOCKER_TAG: ${{ inputs.topos-smart-contracts-docker-tag || 'latest' }}
+
+jobs:
+  infra-metadata:
+    uses: ./.github/workflows/util:get-latest-release.yml
+    with:
+      organization: topos-protocol
+      repository: local-erc20-messaging-infra
+
+  e2e:
+    runs-on: ubuntu-latest-16-core
+    environment: devnet-1
+    env:
+      INFRA_REF: ${{ inputs.local-erc20-messaging-infra-ref || needs.infra-metadata.outputs.latest-release }}
+    needs:
+      - infra-metadata
+    steps:
+      - name: Display stack component versions
+        run: |
+          echo "infra ref: ${{ env.INFRA_REF }}"
+          echo "topos docker tag: ${{ env.TOPOS_DOCKER_TAG }}"
+          echo "contracts docker tag: ${{ env.CONTRACTS_DOCKER_TAG }}"
+
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v2
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v2
+
+      - name: Cache Docker layers
+        uses: actions/cache@v3
+        with:
+          path: /tmp/.buildx-cache
+          key: ${{ runner.os }}-buildx-${{ github.sha }}
+          restore-keys: |
+            ${{ runner.os }}-buildx-
+
+      - name: Checkout local-erc20-messaging-infra repo
+        uses: actions/checkout@v3
+        with:
+          repository: topos-protocol/local-erc20-messaging-infra
+          ref: ${{ env.INFRA_REF }}
+          path: infra
+
+      - name: Start local ERC20 messaging infra containers
+        run: >
+          cd infra &&
+          source .env &&
+          ./tests/network.sh start
+        env:
+          TOPOS_VERSION: ${{ env.TOPOS_DOCKER_TAG }}
+          TOPOS_MESSAGING_PROTOCOL_CONTRACTS_VERSION: ${{ env.CONTRACTS_DOCKER_TAG }}
+
+      - name: Debug containers
+        if: failure()
+        run: docker inspect contracts-topos | grep Image && docker logs contracts-topos
+
+      - name: Get contracts .env file and expose contract addresses for test scripts
+        run: |
+          mkdir ./contracts
+          docker cp contracts-topos:/contracts/.env ./contracts/.env
+          source ./contracts/.env
+          echo "SUBNET_REGISTRATOR_CONTRACT_ADDRESS=${SUBNET_REGISTRATOR_CONTRACT_ADDRESS}" >> $GITHUB_ENV
+          echo "ERC20_MESSAGING_CONTRACT_ADDRESS=${ERC20_MESSAGING_CONTRACT_ADDRESS}" >> $GITHUB_ENV
+          echo "TOPOS_CORE_PROXY_CONTRACT_ADDRESS=${TOPOS_CORE_PROXY_CONTRACT_ADDRESS}" >> $GITHUB_ENV
+
+      - name: Run topos integration tests
+        run: >
+          cd infra &&
+          source .env &&
+          ./tests/test_cert_production.sh &&
+          echo "All tests executed"
+        env:
+          COMPOSE_DOCKER_CLI_BUILD: 1
+          DOCKER_BUILDKIT: 1
+          DOCKER_DEFAULT_PLATFORM: linux/amd64
+          CYPRESS_REMOTE_DEBUGGING_PORT: ${{ vars.CYPRESS_REMOTE_DEBUGGING_PORT }}
+          PORT: 3001
+          AUTH0_AUDIENCE: ${{ secrets.AUTH0_AUDIENCE }}
+          AUTH0_CLIENT_ID: ${{ secrets.AUTH0_CLIENT_ID }}
+          AUTH0_CLIENT_SECRET: ${{ secrets.AUTH0_CLIENT_SECRET }}
+          AUTH0_ISSUER_URL: ${{ secrets.AUTH0_ISSUER_URL }}
+          PRIVATE_KEY: ${{ secrets.PRIVATE_KEY }}
+          VITE_EXECUTOR_SERVICE_ENDPOINT: ${{ vars.EXECUTOR_SERVICE_ENDPOINT }}
+          VITE_SUBNET_REGISTRATOR_CONTRACT_ADDRESS: ${{ env.SUBNET_REGISTRATOR_CONTRACT_ADDRESS }}
+          VITE_ERC20_MESSAGING_CONTRACT_ADDRESS: ${{ env.ERC20_MESSAGING_CONTRACT_ADDRESS }}
+          VITE_TOPOS_CORE_PROXY_CONTRACT_ADDRESS: ${{ env.TOPOS_CORE_PROXY_CONTRACT_ADDRESS }}
+          VITE_TOPOS_SUBNET_ENDPOINT_WS: ${{ vars.TOPOS_SUBNET_ENDPOINT_WS }}
+          VITE_TOPOS_SUBNET_ENDPOINT_HTTP: ${{ vars.TOPOS_SUBNET_ENDPOINT_HTTP }}
+          VITE_ELASTIC_APM_ENDPOINT: ${{ secrets.ELASTIC_APM_ENDPOINT }}
+          VITE_TRACING_SERVICE_NAME: ${{ vars.TRACING_SERVICE_NAME }}
+          VITE_TRACING_SERVICE_VERSION: ${{ vars.TRACING_SERVICE_VERSION }}
+
+      - name: Debug docker show infra containers
+        if: failure()
+        run: docker ps
+
+      - name: Debug sending sequencer
+        if: failure()
+        run: docker logs topos-sequencer
+
+      - name: Debug receiving sequencer
+        if: failure()
+        run: docker logs incal-sequencer
+
+      - name: Debug TCE boot node
+        if: failure()
+        run: docker logs topos-node-1 || docker logs infra-tce-boot-1
+
+      - name: Debug TCE peer node 2
+        if: failure()
+        run: docker logs topos-node-2 || docker logs infra-tce-peer-1
+
+      - name: Debug TCE peer node 3
+        if: failure()
+        run: docker logs topos-node-3 || docker logs infra-tce-peer-2
+
+      - name: Debug TCE peer node 4
+        if: failure()
+        run: docker logs topos-node-4 || docker logs infra-tce-peer-3
+
+      - name: Debug Incal node 1
+        if: failure()
+        run: docker logs incal-node-1
