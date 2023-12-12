@@ -96,8 +96,6 @@ jobs:
           source .env &&
           ./tests/test_cert_production.sh
         env:
-          COMPOSE_DOCKER_CLI_BUILD: 1
-          DOCKER_BUILDKIT: 1
           DOCKER_DEFAULT_PLATFORM: linux/amd64
           PRIVATE_KEY: ${{ secrets.PRIVATE_KEY }}
           TOKEN_DEPLOYER_SALT: ${{ secrets.TOKEN_DEPLOYER_SALT }}
