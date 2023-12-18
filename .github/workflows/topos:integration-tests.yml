@@ -94,9 +94,6 @@ jobs:
         run: >
           cd infra &&
           source .env &&
-          pwd &&
-          ls -la &&
-          ls -la tests &&
           ./tests/test_network_health.sh
         env:
           DOCKER_DEFAULT_PLATFORM: linux/amd64
