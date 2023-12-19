@@ -62,6 +62,11 @@ jobs:
           ref: ${{ env.INFRA_REF }}
           path: infra
 
+      - name: Install node dependencies
+        run: |
+          cd infra &&
+          npm install
+
       - name: Start local ERC20 messaging infra containers
         run: >
           cd infra &&
