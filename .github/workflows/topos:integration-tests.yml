@@ -62,6 +62,11 @@ jobs:
           ref: ${{ env.INFRA_REF }}
           path: infra
 
+      - name: Install node dependencies
+        run: |
+          cd infra &&
+          npm install
+
       - name: Start local ERC20 messaging infra containers
         run: >
           cd infra &&
@@ -130,7 +135,35 @@ jobs:
           TOPOS_CORE_SALT: ${{ secrets.TOPOS_CORE_SALT }}
           TOPOS_CORE_PROXY_SALT: ${{ secrets.TOPOS_CORE_PROXY_SALT }}
           ERC20_MESSAGING_SALT: ${{ secrets.ERC20_MESSAGING_SALT }}
-          SUBNET_REGISTRATOR_SALT: ${{ secrets.SUBNET_REGISTRATOR_SALT }}          
+          SUBNET_REGISTRATOR_SALT: ${{ secrets.SUBNET_REGISTRATOR_SALT }}
+
+      - name: Run transaction included in certificate test
+        run: >
+          cd infra &&
+          source .env &&
+          ./tests/test_transaction_in_certificate.sh
+        env:
+          DOCKER_DEFAULT_PLATFORM: linux/amd64
+          PRIVATE_KEY: ${{ secrets.PRIVATE_KEY }}
+          TOKEN_DEPLOYER_SALT: ${{ secrets.TOKEN_DEPLOYER_SALT }}
+          TOPOS_CORE_SALT: ${{ secrets.TOPOS_CORE_SALT }}
+          TOPOS_CORE_PROXY_SALT: ${{ secrets.TOPOS_CORE_PROXY_SALT }}
+          ERC20_MESSAGING_SALT: ${{ secrets.ERC20_MESSAGING_SALT }}
+          SUBNET_REGISTRATOR_SALT: ${{ secrets.SUBNET_REGISTRATOR_SALT }}
+
+      - name: Run certificate inclusion test
+        run: >
+          cd infra &&
+          source .env &&
+          ./tests/test_cert_inclusion.sh
+        env:
+          DOCKER_DEFAULT_PLATFORM: linux/amd64
+          PRIVATE_KEY: ${{ secrets.PRIVATE_KEY }}
+          TOKEN_DEPLOYER_SALT: ${{ secrets.TOKEN_DEPLOYER_SALT }}
+          TOPOS_CORE_SALT: ${{ secrets.TOPOS_CORE_SALT }}
+          TOPOS_CORE_PROXY_SALT: ${{ secrets.TOPOS_CORE_PROXY_SALT }}
+          ERC20_MESSAGING_SALT: ${{ secrets.ERC20_MESSAGING_SALT }}
+          SUBNET_REGISTRATOR_SALT: ${{ secrets.SUBNET_REGISTRATOR_SALT }}
 
       - name: Debug docker show infra containers
         if: failure()
