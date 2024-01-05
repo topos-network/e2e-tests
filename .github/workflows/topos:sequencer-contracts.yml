@@ -121,5 +121,6 @@ jobs:
       - name: Run all workspace tests
         working-directory: topos
         run: |
+          export PATH=$PATH:/home/runner/.config/.foundry/bin
           cd crates/topos-sequencer-subnet-runtime
           cargo test -- --nocapture
