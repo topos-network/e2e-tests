@@ -86,10 +86,6 @@ jobs:
         with:
           repo-token: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Pull polygon-edge docker image
-        run: |
-          docker pull ghcr.io/topos-protocol/polygon-edge:${{ env.POLYGON_EDGE_DOCKER_TAG }}
-
       - name: Checkout topos-smart-contracts repo
         uses: actions/checkout@v3
         with:
@@ -114,6 +110,9 @@ jobs:
 
       - name: Move contract artifacts
         run: mv contracts/artifacts topos
+
+      - name: Install anvil 
+        run: curl -L https://foundry.paradigm.xyz | bash && foundryup
 
       - name: Run all workspace tests
         working-directory: topos
