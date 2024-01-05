@@ -112,7 +112,7 @@ jobs:
         run: mv contracts/artifacts topos
 
       - name: Install anvil 
-        run: curl -L https://foundry.paradigm.xyz | bash && source /home/runner/.bashrc && foundryup
+        run: curl -L https://foundry.paradigm.xyz | bash && source /home/runner/.bashrc && /home/runner/.config/.foundry/bin/foundryup
 
       - name: Run all workspace tests
         working-directory: topos
