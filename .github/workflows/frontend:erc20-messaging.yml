@@ -181,7 +181,6 @@ jobs:
         run: docker logs incal-node-1
 
       - name: Debug executor service
-        if: failure()
         run: docker logs executor-service
 
       - name: Archive e2e artifacts
