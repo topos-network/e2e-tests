@@ -107,10 +107,23 @@ jobs:
           ref: ${{ env.FAUCET_REF }}
           path: faucet
 
+      - name: Install dependencies
+        working-directory: faucet
+        run: npm ci
+
+      - name: Build frontend
+        working-directory: faucet/frontend
+        run: npm run frontend:build
+        env:
+          VITE_RECAPTCHA_SITE_KEY: ${{ secrets.RECAPTCHA_SITE_KEY }}
+          VITE_SUBNET_REGISTRATOR_CONTRACT_ADDRESS: ${{ env.SUBNET_REGISTRATOR_CONTRACT_ADDRESS }}
+          VITE_TOPOS_CORE_PROXY_CONTRACT_ADDRESS: ${{ env.TOPOS_CORE_PROXY_CONTRACT_ADDRESS }}
+          VITE_TOPOS_SUBNET_ENDPOINT_HTTP: ${{ vars.TOPOS_SUBNET_ENDPOINT_HTTP }}
+          VITE_TOPOS_SUBNET_ENDPOINT_WS: ${{ vars.TOPOS_SUBNET_ENDPOINT_WS }}
+
       - name: Run e2e tests
-        run: >
-          cd faucet &&
-          npm run test:e2e
+        working-directory: faucet
+        run: npm run test:e2e
         env:
           CYPRESS_REMOTE_DEBUGGING_PORT: ${{ vars.CYPRESS_REMOTE_DEBUGGING_PORT }}
           PORT: 3002
@@ -119,10 +132,8 @@ jobs:
           AUTH0_CLIENT_SECRET: ${{ secrets.AUTH0_CLIENT_SECRET }}
           AUTH0_ISSUER_URL: ${{ secrets.AUTH0_ISSUER_URL }}
           PRIVATE_KEY: ${{ secrets.PRIVATE_KEY }}
-          VITE_SUBNET_REGISTRATOR_CONTRACT_ADDRESS: ${{ env.SUBNET_REGISTRATOR_CONTRACT_ADDRESS }}
-          VITE_TOPOS_CORE_PROXY_CONTRACT_ADDRESS: ${{ env.TOPOS_CORE_PROXY_CONTRACT_ADDRESS }}
-          VITE_TOPOS_SUBNET_ENDPOINT_WS: ${{ vars.TOPOS_SUBNET_ENDPOINT_WS }}
-          VITE_TOPOS_SUBNET_ENDPOINT_HTTP: ${{ vars.TOPOS_SUBNET_ENDPOINT_HTTP }}
+          THROTTLER_TTL_SECONDS: ${{ vars.THROTTLER_TTL_SECONDS }}
+          
 
       - name: Debug docker show infra containers
         if: failure()
