@@ -112,7 +112,7 @@ jobs:
         run: npm ci
 
       - name: Build frontend
-        working-directory: faucet/frontend
+        working-directory: faucet
         run: npm run frontend:build
         env:
           VITE_RECAPTCHA_SITE_KEY: ${{ secrets.RECAPTCHA_SITE_KEY }}
