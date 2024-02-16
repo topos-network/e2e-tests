@@ -1,0 +1,126 @@
+name: Certificate Producer Topos-Smart-Contracts
+
+on:
+  pull_request:
+    branches:
+      - main
+  workflow_dispatch:
+    inputs:
+      topos-ref:
+        description: "Git ref of topos"
+        required: false
+      topos-smart-contracts-ref:
+        description: "Git ref of topos-smart-contracts"
+        required: false
+      polygon-edge-docker-tag:
+        description: "Docker tag of polygon-edge"
+        required: false
+
+env:
+  CARGO_TERM_COLOR: always
+  RUSTFLAGS: -Dwarnings
+  RUST_BACKTRACE: 1
+  rust_clippy: 1.62.1
+  POLYGON_EDGE_DOCKER_TAG: ${{ inputs.polygon-edge-docker-tag || 'develop' }}
+
+jobs:
+  # Wait for topos to have a release pipeline. In the meantime => use main if no input
+  # topos-metadata:
+  #   uses: ./.github/workflows/util:get-latest-release.yml
+  #   with:
+  #     organization: topos-protocol
+  #     repository: topos
+
+  contracts-metadata:
+    uses: ./.github/workflows/util:get-latest-release.yml
+    with:
+      organization: topos-protocol
+      repository: topos-smart-contracts
+
+  e2e:
+    strategy:
+      fail-fast: false
+      matrix:
+        target:
+          - {
+              name: Linux,
+              os: ubuntu-latest-16-core,
+              triple: x86_64-unknown-linux-gnu,
+            }
+        version:
+          - stable
+          - nightly
+    name: ${{ matrix.version }}
+    runs-on: ${{ matrix.target.os }}
+    env:
+      TOPOS_REF: ${{ inputs.topos-ref || 'main' }}
+      CONTRACTS_REF: ${{ inputs.topos-smart-contracts-ref || needs.contracts-metadata.outputs.latest-release }}
+    needs:
+      - contracts-metadata
+    steps:
+      - name: Display stack component versions
+        run: >
+          echo "topos ref: ${{ env.TOPOS_REF }}" &&
+          echo "contracts ref: ${{ env.CONTRACTS_REF }}" &&
+          echo "polygon-edge docker tag: ${{ env.POLYGON_EDGE_DOCKER_TAG }}"
+
+      - name: Checkout topos repo
+        uses: actions/checkout@v3
+        with:
+          repository: topos-protocol/topos
+          ref: ${{ env.TOPOS_REF }}
+          path: topos
+
+      - name: Install Rust ${{ matrix.version }}
+        uses: actions-rs/toolchain@v1
+        with:
+          toolchain: ${{ matrix.version }}
+          components:
+          override: true
+
+      - name: Set up rust cache
+        uses: Swatinem/rust-cache@v1
+
+      - name: Install Protoc
+        uses: arduino/setup-protoc@v2
+        with:
+          repo-token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Checkout topos-smart-contracts repo
+        uses: actions/checkout@v3
+        with:
+          repository: topos-protocol/topos-smart-contracts
+          ref: ${{ env.CONTRACTS_REF }}
+          path: contracts
+
+      - name: Set up NodeJS
+        uses: actions/setup-node@v3
+        with:
+          node-version: 16
+          cache: "npm"
+          cache-dependency-path: contracts/package-lock.json
+
+      - name: Install dependencies
+        working-directory: contracts
+        run: npm ci
+
+      - name: Build contracts
+        working-directory: contracts
+        run: npm run build
+
+      - name: Move contract artifacts
+        run: mv contracts/artifacts topos
+
+      - name: Install anvil
+        run: |
+          curl -L https://foundry.paradigm.xyz -o install_foundry.sh
+          bash install_foundry.sh
+          source /home/runner/.bashrc
+          /home/runner/.config/.foundry/bin/foundryup
+
+      - name: Run all workspace tests
+        working-directory: topos
+        run: |
+          export PATH=$PATH:/home/runner/.config/.foundry/bin
+          cd crates/topos-certificate-producer-subnet-runtime
+          cargo test -- --nocapture
