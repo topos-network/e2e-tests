@@ -78,7 +78,7 @@ jobs:
           TOPOS_CORE_SALT: ${{ secrets.TOPOS_CORE_SALT }}
           TOPOS_CORE_PROXY_SALT: ${{ secrets.TOPOS_CORE_PROXY_SALT }}
           ERC20_MESSAGING_SALT: ${{ secrets.ERC20_MESSAGING_SALT }}
-          SUBNET_REGISTRATOR_SALT: ${{ secrets.SUBNET_REGISTRATOR_SALT }}        
+          SUBNET_REGISTRATOR_SALT: ${{ secrets.SUBNET_REGISTRATOR_SALT }}
           TOPOS_VERSION: ${{ env.TOPOS_DOCKER_TAG }}
           TOPOS_MESSAGING_PROTOCOL_CONTRACTS_VERSION: ${{ env.CONTRACTS_DOCKER_TAG }}
 
@@ -151,11 +151,11 @@ jobs:
           ERC20_MESSAGING_SALT: ${{ secrets.ERC20_MESSAGING_SALT }}
           SUBNET_REGISTRATOR_SALT: ${{ secrets.SUBNET_REGISTRATOR_SALT }}
 
-      - name: Run target sequencer cert delivery test
+      - name: Run target Certificate Producer cert delivery test
         run: >
           cd infra &&
           source .env &&
-          ./tests/test_cert_sequencer_delivery.sh
+          ./tests/test_cert_certificate_producer_delivery.sh
         env:
           DOCKER_DEFAULT_PLATFORM: linux/amd64
           PRIVATE_KEY: ${{ secrets.PRIVATE_KEY }}
@@ -183,13 +183,13 @@ jobs:
         if: failure()
         run: docker ps
 
-      - name: Debug sending sequencer
+      - name: Debug sending Certificate Producer
         if: failure()
-        run: docker logs topos-sequencer
+        run: docker logs topos-certificate-producer
 
-      - name: Debug receiving sequencer
+      - name: Debug receiving Certificate Producer
         if: failure()
-        run: docker logs incal-sequencer
+        run: docker logs incal-certificate-producer
 
       - name: Debug TCE boot node
         if: failure()
