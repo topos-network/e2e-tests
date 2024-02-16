@@ -22,7 +22,7 @@ E2E-Tests is the end-to-end test suite testing all components of the Topos stack
 
 ## Support
 
-Feel free to [open an issue](https://github.com/topos-protocol/e2e-tests/issues/new) if you have any feature request or bug report.<br />
+Feel free to [open an issue](https://github.com/topos-protocol/e2e-tests/issues/new) if you have a feature request or bug report.<br />
 If you have any questions, do not hesitate to reach out to us on [Discord](https://discord.gg/7HZ8F8ykBT)!
 
 ## Resources
