@@ -1,4 +1,4 @@
-name: Sequencer Topos-Smart-Contracts
+name: Certificate Producer Topos-Smart-Contracts
 
 on:
   pull_request:
@@ -111,8 +111,8 @@ jobs:
       - name: Move contract artifacts
         run: mv contracts/artifacts topos
 
-      - name: Install anvil 
-        run: | 
+      - name: Install anvil
+        run: |
           curl -L https://foundry.paradigm.xyz -o install_foundry.sh
           bash install_foundry.sh
           source /home/runner/.bashrc
@@ -122,5 +122,5 @@ jobs:
         working-directory: topos
         run: |
           export PATH=$PATH:/home/runner/.config/.foundry/bin
-          cd crates/topos-sequencer-subnet-runtime
+          cd crates/topos-certificate-producer-subnet-runtime
           cargo test -- --nocapture

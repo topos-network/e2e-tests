@@ -17,17 +17,13 @@ E2E-Tests is the end-to-end test suite testing all components of the Topos stack
 </div>
 
 ![example workflow](https://github.com/topos-protocol/e2e-tests/actions/workflows/frontend:erc20-messaging.yml/badge.svg)
-![example workflow](https://github.com/topos-protocol/e2e-tests/actions/workflows/topos:sequencer-contracts.yml/badge.svg)
+![example workflow](https://github.com/topos-protocol/e2e-tests/actions/workflows/topos:certificate-producer-contracts.yml/badge.svg)
 [![](https://dcbadge.vercel.app/api/server/7HZ8F8ykBT?style=flat)](https://discord.gg/7HZ8F8ykBT)
-
-## Development
-
-Contributions are very welcomed, the guidelines are outlined in [`CONTRIBUTING.md`](./CONTRIBUTING.md).
 
 ## Support
 
-Feel free to [open an issue](https://github.com/topos-protocol/e2e-tests/issues/new) if you have any feature request or bug report.<br />
-If you have any questions, do not hesitate to reach us on [Discord](https://discord.gg/7HZ8F8ykBT)!
+Feel free to [open an issue](https://github.com/topos-protocol/e2e-tests/issues/new) if you have a feature request or bug report.<br />
+If you have any questions, do not hesitate to reach out to us on [Discord](https://discord.gg/7HZ8F8ykBT)!
 
 ## Resources
 
