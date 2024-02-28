@@ -67,10 +67,15 @@ jobs:
           cd infra &&
           npm install
 
+      - name: Setup environment
+        run: |
+          cd infra
+          cat .env | grep -v '^\s*$\|^\s*\#' | xargs -I {} echo "{}" >> $GITHUB_ENV
+          echo "LOCAL_ERC20_HOME=${PWD}" >> $GITHUB_ENV
+
       - name: Start local ERC20 messaging infra containers
         run: >
           cd infra &&
-          source .env &&
           ./tests/network.sh start
         env:
           PRIVATE_KEY: ${{ secrets.PRIVATE_KEY }}
@@ -98,7 +103,6 @@ jobs:
       - name: Run network health check tests
         run: >
           cd infra &&
-          source .env &&
           ./tests/test_network_health.sh
         env:
           DOCKER_DEFAULT_PLATFORM: linux/amd64
@@ -112,7 +116,6 @@ jobs:
       - name: Run certificates production tests
         run: >
           cd infra &&
-          source .env &&
           ./tests/test_cert_production.sh
         env:
           DOCKER_DEFAULT_PLATFORM: linux/amd64
@@ -126,7 +129,6 @@ jobs:
       - name: Run certificate delivery test
         run: >
           cd infra &&
-          source .env &&
           ./tests/test_cert_delivery.sh
         env:
           DOCKER_DEFAULT_PLATFORM: linux/amd64
@@ -140,7 +142,6 @@ jobs:
       - name: Run transaction included in certificate test
         run: >
           cd infra &&
-          source .env &&
           ./tests/test_transaction_in_certificate.sh
         env:
           DOCKER_DEFAULT_PLATFORM: linux/amd64
@@ -154,7 +155,6 @@ jobs:
       - name: Run target sequencer cert delivery test
         run: >
           cd infra &&
-          source .env &&
           ./tests/test_cert_sequencer_delivery.sh
         env:
           DOCKER_DEFAULT_PLATFORM: linux/amd64
@@ -168,7 +168,6 @@ jobs:
       - name: Run certificate inclusion test
         run: >
           cd infra &&
-          source .env &&
           ./tests/test_cert_inclusion.sh
         env:
           DOCKER_DEFAULT_PLATFORM: linux/amd64
