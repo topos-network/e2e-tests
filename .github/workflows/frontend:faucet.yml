@@ -1,4 +1,4 @@
-name: Frontend ERC20-Messaging
+name: Frontend Faucet
 
 on:
   pull_request:
@@ -6,18 +6,11 @@ on:
       - main
   workflow_dispatch:
     inputs:
-      e2e-test-type:
-        description: "Type of e2e-tests from dapp-frontend-erc20-messaging"
-        type: choice
-        default: light
-        options:
-        - light
-        - full
       local-erc20-messaging-infra-ref:
         description: "Git ref of local-erc20-messaging-infra"
         required: false
-      dapp-frontend-erc20-messaging-ref:
-        description: "Git ref of dapp-frontend-erc20-messaging"
+      faucet-ref:
+        description: "Git ref of faucet"
         required: false
       topos-docker-tag:
         description: "Docker tag of topos"
@@ -25,15 +18,10 @@ on:
       topos-smart-contracts-docker-tag:
         description: "Docker tag of topos-smart-contracts"
         required: false
-      executor-service-docker-tag:
-        description: "Docker tag of executor-service"
-        required: false
 
 env:
-  E2E_TEST_TYPE: ${{ inputs.e2e-test-type || 'light' }}
   TOPOS_DOCKER_TAG: ${{ inputs.topos-docker-tag || 'latest' }}
   CONTRACTS_DOCKER_TAG: ${{ inputs.topos-smart-contracts-docker-tag || 'latest' }}
-  EXECUTOR_SERVICE_DOCKER_TAG: ${{ inputs.executor-service-docker-tag || 'latest' }}
 
 jobs:
   infra-metadata:
@@ -42,30 +30,28 @@ jobs:
       organization: topos-protocol
       repository: local-erc20-messaging-infra
 
-  frontend-metadata:
+  faucet-metadata:
     uses: ./.github/workflows/util:get-latest-release.yml
     with:
       organization: topos-protocol
-      repository: dapp-frontend-erc20-messaging
+      repository: faucet
 
   e2e:
     runs-on: ubuntu-latest-16-core
     environment: devnet-1
     env:
       INFRA_REF: ${{ inputs.local-erc20-messaging-infra-ref || needs.infra-metadata.outputs.latest-release }}
-      FRONTEND_REF: ${{ inputs.dapp-frontend-erc20-messaging-ref || needs.frontend-metadata.outputs.latest-release }}
+      FAUCET_REF: ${{ inputs.faucet-ref || needs.faucet-metadata.outputs.latest-release }}
     needs:
       - infra-metadata
-      - frontend-metadata
+      - faucet-metadata
     steps:
       - name: Display stack component versions
         run: |
-          echo "event type: ${{ github.event_name }}"
           echo "infra ref: ${{ env.INFRA_REF }}"
-          echo "frontend ref: ${{ env.FRONTEND_REF }}"
+          echo "faucet ref: ${{ env.FAUCET_REF }}"
           echo "topos docker tag: ${{ env.TOPOS_DOCKER_TAG }}"
           echo "contracts docker tag: ${{ env.CONTRACTS_DOCKER_TAG }}"
-          echo "executor service docker tag: ${{ env.EXECUTOR_SERVICE_DOCKER_TAG }}"
 
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v2
@@ -91,7 +77,7 @@ jobs:
       - name: Start local ERC20 messaging infra containers
         run: >
           cd infra &&
-          docker compose --profile executor-service up -d
+          docker compose up -d
         env:
           PRIVATE_KEY: ${{ secrets.PRIVATE_KEY }}
           TOKEN_DEPLOYER_SALT: ${{ secrets.TOKEN_DEPLOYER_SALT }}
@@ -101,50 +87,53 @@ jobs:
           SUBNET_REGISTRATOR_SALT: ${{ secrets.SUBNET_REGISTRATOR_SALT }}
           TOPOS_VERSION: ${{ env.TOPOS_DOCKER_TAG }}
           TOPOS_MESSAGING_PROTOCOL_CONTRACTS_VERSION: ${{ env.CONTRACTS_DOCKER_TAG }}
-          EXECUTOR_SERVICE_VERSION: ${{ env.EXECUTOR_SERVICE_DOCKER_TAG }}
 
       - name: Debug containers
         if: failure()
         run: docker inspect contracts-topos | grep Image && docker logs contracts-topos
 
-      - name: Get contracts .env file and expose contract addresses for frontend
+      - name: Get contracts .env file and expose contract addresses for faucet
         run: |
           mkdir ./contracts
           docker cp contracts-topos:/contracts/.env ./contracts/.env
           source ./contracts/.env
           echo "SUBNET_REGISTRATOR_CONTRACT_ADDRESS=${SUBNET_REGISTRATOR_CONTRACT_ADDRESS}" >> $GITHUB_ENV
-          echo "ERC20_MESSAGING_CONTRACT_ADDRESS=${ERC20_MESSAGING_CONTRACT_ADDRESS}" >> $GITHUB_ENV
           echo "TOPOS_CORE_PROXY_CONTRACT_ADDRESS=${TOPOS_CORE_PROXY_CONTRACT_ADDRESS}" >> $GITHUB_ENV
 
-      - name: Checkout dapp-frontend-erc20-messaging repo
+      - name: Checkout faucet repo
         uses: actions/checkout@v3
         with:
-          repository: topos-protocol/dapp-frontend-erc20-messaging
-          ref: ${{ env.FRONTEND_REF }}
-          path: frontend
+          repository: topos-protocol/faucet
+          ref: ${{ env.FAUCET_REF }}
+          path: faucet
+
+      - name: Install dependencies
+        working-directory: faucet
+        run: npm ci
+
+      - name: Build frontend
+        working-directory: faucet
+        run: npm run frontend:build
+        env:
+          VITE_RECAPTCHA_SITE_KEY: ${{ secrets.RECAPTCHA_SITE_KEY }}
+          VITE_SUBNET_REGISTRATOR_CONTRACT_ADDRESS: ${{ env.SUBNET_REGISTRATOR_CONTRACT_ADDRESS }}
+          VITE_TOPOS_CORE_PROXY_CONTRACT_ADDRESS: ${{ env.TOPOS_CORE_PROXY_CONTRACT_ADDRESS }}
+          VITE_TOPOS_SUBNET_ENDPOINT_HTTP: ${{ vars.TOPOS_SUBNET_ENDPOINT_HTTP }}
+          VITE_TOPOS_SUBNET_ENDPOINT_WS: ${{ vars.TOPOS_SUBNET_ENDPOINT_WS }}
 
       - name: Run e2e tests
-        run: >
-          cd frontend &&
-          docker compose -f docker-compose.ci.yml up --build --exit-code-from synpress --attach synpress
+        working-directory: faucet
+        run: npm run test:e2e
         env:
-          COMPOSE_DOCKER_CLI_BUILD: 1
-          DOCKER_BUILDKIT: 1
-          DOCKER_DEFAULT_PLATFORM: linux/amd64
           CYPRESS_REMOTE_DEBUGGING_PORT: ${{ vars.CYPRESS_REMOTE_DEBUGGING_PORT }}
-          PORT: 3001
-          E2E_TEST_TYPE: ${{ env.E2E_TEST_TYPE }}
+          PORT: 3002
           AUTH0_AUDIENCE: ${{ secrets.AUTH0_AUDIENCE }}
           AUTH0_CLIENT_ID: ${{ secrets.AUTH0_CLIENT_ID }}
           AUTH0_CLIENT_SECRET: ${{ secrets.AUTH0_CLIENT_SECRET }}
           AUTH0_ISSUER_URL: ${{ secrets.AUTH0_ISSUER_URL }}
           PRIVATE_KEY: ${{ secrets.PRIVATE_KEY }}
-          VITE_EXECUTOR_SERVICE_ENDPOINT: ${{ vars.EXECUTOR_SERVICE_ENDPOINT }}
-          VITE_SUBNET_REGISTRATOR_CONTRACT_ADDRESS: ${{ env.SUBNET_REGISTRATOR_CONTRACT_ADDRESS }}
-          VITE_ERC20_MESSAGING_CONTRACT_ADDRESS: ${{ env.ERC20_MESSAGING_CONTRACT_ADDRESS }}
-          VITE_TOPOS_CORE_PROXY_CONTRACT_ADDRESS: ${{ env.TOPOS_CORE_PROXY_CONTRACT_ADDRESS }}
-          VITE_TOPOS_SUBNET_ENDPOINT_WS: ${{ vars.TOPOS_SUBNET_ENDPOINT_WS }}
-          VITE_TOPOS_SUBNET_ENDPOINT_HTTP: ${{ vars.TOPOS_SUBNET_ENDPOINT_HTTP }}
+          THROTTLER_TTL_SECONDS: ${{ vars.THROTTLER_TTL_SECONDS }}
+          
 
       - name: Debug docker show infra containers
         if: failure()
@@ -177,17 +166,3 @@ jobs:
       - name: Debug incal node 1
         if: failure()
         run: docker logs incal-node-1
-
-      - name: Debug executor service
-        run: docker logs executor-service
-
-      - name: Archive e2e artifacts
-        uses: actions/upload-artifact@v3
-        if: always()
-        with:
-          name: e2e-artifacts
-          path: |
-            frontend/docker/videos
-            frontend/docker/videos-ci
-            frontend/docker/screenshots
-        continue-on-error: true
