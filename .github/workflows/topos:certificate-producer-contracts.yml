@@ -20,7 +20,6 @@ env:
   CARGO_TERM_COLOR: always
   RUSTFLAGS: -Dwarnings
   RUST_BACKTRACE: 1
-  rust_clippy: 1.62.1
   POLYGON_EDGE_DOCKER_TAG: ${{ inputs.polygon-edge-docker-tag || 'develop' }}
 
 jobs:
