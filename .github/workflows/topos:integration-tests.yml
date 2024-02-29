@@ -18,7 +18,7 @@ on:
 
 env:
   TOPOS_DOCKER_TAG: ${{ inputs.topos-docker-tag || 'latest' }}
-  CONTRACTS_DOCKER_TAG: ${{ inputs.topos-smart-contracts-docker-tag || '3.2.0' }}
+  CONTRACTS_DOCKER_TAG: ${{ inputs.topos-smart-contracts-docker-tag || 'latest' }}
 
 jobs:
   infra-metadata:

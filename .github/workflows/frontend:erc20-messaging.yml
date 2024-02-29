@@ -32,7 +32,7 @@ on:
 env:
   E2E_TEST_TYPE: ${{ inputs.e2e-test-type || 'light' }}
   TOPOS_DOCKER_TAG: ${{ inputs.topos-docker-tag || 'latest' }}
-  CONTRACTS_DOCKER_TAG: ${{ inputs.topos-smart-contracts-docker-tag || '3.2.0' }}
+  CONTRACTS_DOCKER_TAG: ${{ inputs.topos-smart-contracts-docker-tag || 'latest' }}
   EXECUTOR_SERVICE_DOCKER_TAG: ${{ inputs.executor-service-docker-tag || 'latest' }}
 
 jobs:
